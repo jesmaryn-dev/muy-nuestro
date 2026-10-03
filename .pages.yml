@@ -1,0 +1,13 @@
+media:
+  input: assets
+  output: assets
+
+content:
+  - name: paginas
+    label: Páginas de Muy Nuestro
+    type: file
+    path: index.html
+    fields:
+      - name: body
+        label: Contenido
+        type: code
