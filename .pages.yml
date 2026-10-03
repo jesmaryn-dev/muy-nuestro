@@ -3,11 +3,13 @@ media:
   output: assets
 
 content:
-  - name: paginas
-    label: Páginas de Muy Nuestro
+  - name: pagina
+    label: Muy Nuestro
     type: file
     path: index.html
     fields:
       - name: body
-        label: Contenido
+        label: Contenido de la página
         type: code
+        options:
+          language: html
