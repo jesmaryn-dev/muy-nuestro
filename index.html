@@ -153,6 +153,14 @@ footer{text-align:center;padding:18px 0 40px;color:#8b796d;font-size:13px}
 @media(max-width:900px){.favorites-grid{grid-template-columns:repeat(2,1fr)}.favorite-shop-box{align-items:flex-start;flex-direction:column}}
 @media(max-width:600px){.favorites-zone{padding:48px 0}.favorites-grid,.favorite-products{grid-template-columns:1fr}.favorite-modal-box{padding:28px 20px 22px}.favorite-modal h2{font-size:32px}.favorite-shop-box{padding:24px}}
 </style>
+
+<link rel="manifest" href="./manifest.webmanifest"/>
+<meta name="theme-color" content="#fffaf2"/>
+<meta name="application-name" content="Muy Nuestro"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+<meta name="apple-mobile-web-app-title" content="Muy Nuestro"/>
+<link rel="apple-touch-icon" href="./icons/icon-192.png"/>
 </head>
 <body id="top">
 <header><div class="wrap top"><a aria-label="Muy Nuestro" class="brand" href="#top"><img alt="Muy Nuestro · Hogar · Familia · Mascotas" src="assets/logo-muy-nuestro.png"/></a><nav><a href="#hogar">Hogar</a><a href="#familia">Familia</a><a href="#mascotas">Mascotas</a><a href="#jardin">Plantas &amp; jardín</a><a href="#favoritos">Favoritos</a></nav></div></header>
@@ -557,5 +565,16 @@ productos:{t:'Fertilizantes & productos',y:['Lee la etiqueta completa: uso, dosi
   if(modal)modal.addEventListener("click",e=>{if(e.target===modal)closeFav();});
   document.addEventListener("keydown",e=>{if(e.key==="Escape"&&modal&&modal.classList.contains("open"))closeFav();});
 })();
+</script>
+<!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "a1f03604cc3b4a8db7b10ce5d7e80582"}'></script><!-- End Cloudflare Web Analytics -->
+
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('./sw.js').catch(function (err) {
+      console.warn('No se pudo registrar el servicio de la aplicación:', err);
+    });
+  });
+}
 </script>
 </body></html>
