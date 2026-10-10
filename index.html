@@ -379,13 +379,17 @@ document.querySelectorAll('[data-pet]').forEach(el=>{el.addEventListener('click'
 <script id="family-complete-js">
 (function(){
 const days=['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
-let week={};days.forEach(d=>week[d]=[]);
+const STORAGE_KEY='muy-nuestro-familia-v1';
+function loadSaved(){try{return JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}')}catch(e){return {}}}
+const saved=loadSaved();
+function persist(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify({week,lists}))}catch(e){console.warn('No se pudo guardar la agenda',e)}}
+let week={};days.forEach(d=>week[d]=Array.isArray(saved.week?.[d])?saved.week[d]:[]);
 const day=document.getElementById('familyDay'),type=document.getElementById('familyType'),task=document.getElementById('familyTask'),board=document.getElementById('familyWeek');
 function esc(v){return String(v).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
-function renderWeek(){board.innerHTML=days.map(d=>'<div class="week-day"><h4>'+d+'</h4>'+(week[d].length?week[d].map((x,i)=>'<label class="week-item '+(x.done?'done':'')+'"><input type="checkbox" data-day="'+d+'" data-i="'+i+'" '+(x.done?'checked':'')+'><span class="week-item-text"><span class="week-type">'+esc(x.type)+'</span>'+esc(x.text)+'</span></label>').join(''):'<div class="week-empty">Todavía libre ✨</div>')+'</div>').join('');board.querySelectorAll('input').forEach(c=>c.onchange=()=>{week[c.dataset.day][+c.dataset.i].done=c.checked;renderWeek()})}
-document.getElementById('familyAdd').onclick=()=>{const v=task.value.trim();if(!v){task.focus();return}week[day.value].push({type:type.value,text:v,done:false});task.value='';renderWeek();task.focus()};
+function renderWeek(){board.innerHTML=days.map(d=>'<div class="week-day"><h4>'+d+'</h4>'+(week[d].length?week[d].map((x,i)=>'<label class="week-item '+(x.done?'done':'')+'"><input type="checkbox" data-day="'+d+'" data-i="'+i+'" '+(x.done?'checked':'')+'><span class="week-item-text"><span class="week-type">'+esc(x.type)+'</span>'+esc(x.text)+'</span></label>').join(''):'<div class="week-empty">Todavía libre ✨</div>')+'</div>').join('');board.querySelectorAll('input').forEach(c=>c.onchange=()=>{week[c.dataset.day][+c.dataset.i].done=c.checked;persist();renderWeek()})}
+document.getElementById('familyAdd').onclick=()=>{const v=task.value.trim();if(!v){task.focus();return}week[day.value].push({type:type.value,text:v,done:false});task.value='';persist();renderWeek();task.focus()};
 task.addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('familyAdd').click()});
-document.getElementById('familyClear').onclick=()=>{if(confirm('¿Limpiar todos los pendientes de esta semana?')){days.forEach(d=>week[d]=[]);renderWeek()}};
+document.getElementById('familyClear').onclick=()=>{if(confirm('¿Limpiar todos los pendientes de esta semana?')){days.forEach(d=>week[d]=[]);persist();renderWeek()}};
 renderWeek();
 
 const presets={
@@ -394,11 +398,11 @@ viaje:['Documentos y reservaciones','Ropa y zapatos','Cargadores / electrónicos
 salida:['Elegir lugar o actividad','Confirmar horario','Revisar reservación / entradas','Preparar lo que haya que llevar'],
 deporte:['Confirmar práctica o juego','Uniforme / ropa deportiva','Agua y merienda','Equipo necesario','Hora de salida / transportación']
 };
-let active='compras',lists={};Object.keys(presets).forEach(k=>lists[k]=presets[k].map(t=>({text:t,done:false})));
+let active='compras',lists={};Object.keys(presets).forEach(k=>lists[k]=Array.isArray(saved.lists?.[k])?saved.lists[k]:presets[k].map(t=>({text:t,done:false})));
 const ql=document.getElementById('familyQuickList'),qi=document.getElementById('familyQuickInput');
-function renderList(){ql.innerHTML=lists[active].map((x,i)=>'<label class="quick-item '+(x.done?'done':'')+'"><input type="checkbox" data-i="'+i+'" '+(x.done?'checked':'')+'><span>'+esc(x.text)+'</span><button class="remove" type="button" data-remove="'+i+'" aria-label="Eliminar">×</button></label>').join('');ql.querySelectorAll('input').forEach(c=>c.onchange=()=>{lists[active][+c.dataset.i].done=c.checked;renderList()});ql.querySelectorAll('.remove').forEach(b=>b.onclick=e=>{e.preventDefault();lists[active].splice(+b.dataset.remove,1);renderList()})}
+function renderList(){ql.innerHTML=lists[active].map((x,i)=>'<label class="quick-item '+(x.done?'done':'')+'"><input type="checkbox" data-i="'+i+'" '+(x.done?'checked':'')+'><span>'+esc(x.text)+'</span><button class="remove" type="button" data-remove="'+i+'" aria-label="Eliminar">×</button></label>').join('');ql.querySelectorAll('input').forEach(c=>c.onchange=()=>{lists[active][+c.dataset.i].done=c.checked;persist();renderList()});ql.querySelectorAll('.remove').forEach(b=>b.onclick=e=>{e.preventDefault();lists[active].splice(+b.dataset.remove,1);persist();renderList()})}
 document.querySelectorAll('.quick-tabs button').forEach(b=>b.onclick=()=>{document.querySelectorAll('.quick-tabs button').forEach(x=>x.classList.remove('active'));b.classList.add('active');active=b.dataset.list;renderList()});
-document.getElementById('familyQuickAdd').onclick=()=>{const v=qi.value.trim();if(!v){qi.focus();return}lists[active].push({text:v,done:false});qi.value='';renderList();qi.focus()};
+document.getElementById('familyQuickAdd').onclick=()=>{const v=qi.value.trim();if(!v){qi.focus();return}lists[active].push({text:v,done:false});qi.value='';persist();renderList();qi.focus()};
 qi.addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('familyQuickAdd').click()});renderList();
 })();
 </script><script id="family-interactive-js">
@@ -413,7 +417,10 @@ qi.addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('fa
     travel:['Viajes','Plan, equipaje, documentos y pendientes para salir con menos “¿trajiste…?”.'],
     outing:['Salidas en familia','Planes sencillos, comidas, paseos y tiempo juntos que también merece un espacio en el calendario.'],
     week:['Nuestra semana','Un solo vistazo para unir trabajo, casa, actividades y momentos para disfrutar.']};
-  const state={work:[],sports:[],shopping:[],travel:[],outing:[]};
+  const MODAL_KEY='muy-nuestro-familia-listas-v1';
+  let stored={};try{stored=JSON.parse(localStorage.getItem(MODAL_KEY)||'{}')}catch(e){}
+  const state={};['work','sports','shopping','travel','outing'].forEach(k=>state[k]=Array.isArray(stored[k])?stored[k]:[]);
+  function persist(){try{localStorage.setItem(MODAL_KEY,JSON.stringify(state))}catch(e){console.warn('No se pudo guardar la lista',e)}}
 
   function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
   function renderList(key){
@@ -422,15 +429,15 @@ qi.addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('fa
     state[key].forEach((it,i)=>{
       const row=document.createElement('div'); row.className='family-list-item'+(it.done?' done':'');
       row.innerHTML='<input type="checkbox" '+(it.done?'checked':'')+' aria-label="Marcar completado"><span class="family-item-text">'+esc(it.text)+'</span><button class="family-remove" type="button" aria-label="Eliminar">×</button>';
-      row.querySelector('input').addEventListener('change',e=>{it.done=e.target.checked;renderList(key)});
-      row.querySelector('button').addEventListener('click',()=>{state[key].splice(i,1);renderList(key)});
+      row.querySelector('input').addEventListener('change',e=>{it.done=e.target.checked;persist();renderList(key)});
+      row.querySelector('button').addEventListener('click',()=>{state[key].splice(i,1);persist();renderList(key)});
       list.appendChild(row);
     });
   }
   function simpleTool(key,placeholder,buttonText,starter){
     body.innerHTML='<form class="family-form"><label>¿Qué quieres añadir?<input maxlength="100" placeholder="'+placeholder+'"></label><button type="submit">'+buttonText+'</button></form><div class="family-list"></div><div class="family-note">'+starter+'</div>';
     const form=body.querySelector('form'), input=form.querySelector('input');
-    form.addEventListener('submit',e=>{e.preventDefault();const v=input.value.trim();if(!v)return;state[key].push({text:v,done:false});input.value='';renderList(key);input.focus()});
+    form.addEventListener('submit',e=>{e.preventDefault();const v=input.value.trim();if(!v)return;state[key].push({text:v,done:false});input.value='';persist();renderList(key);input.focus()});
     renderList(key);
   }
   function weekTool(){
