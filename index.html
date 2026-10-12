@@ -161,6 +161,32 @@ footer{text-align:center;padding:18px 0 40px;color:#8b796d;font-size:13px}
 <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
 <meta name="apple-mobile-web-app-title" content="Muy Nuestro"/>
 <link rel="apple-touch-icon" href="./icons/icon-192.png"/>
+<style id="muy-nuestro-responsive-hero-fix">
+/* Vista móvil: portada completa sin cortar el texto integrado en la imagen.
+   El diseño de escritorio permanece intacto. */
+@media screen and (max-width: 600px) {
+  .hero { padding: 26px 0 18px; }
+  .hero .hero-grid { grid-template-columns: minmax(0, 1fr); gap: 24px; }
+  .hero .hero-grid > div { min-width: 0; max-width: 100%; }
+  .hero .hero-grid > div:first-child { text-align: center; }
+  .hero .eyebrow { font-size: 10px; line-height: 1.45; letter-spacing: .14em; }
+  .hero h1 { font-size: clamp(35px, 9vw, 44px); line-height: 1.07; overflow-wrap: break-word; }
+  .hero .lead { font-size: 15px; line-height: 1.55; max-width: 100%; }
+  .hero .cta { max-width: 100%; padding: 13px 18px; white-space: normal; font-size: 14px; }
+  .hero .hero-art {
+    width: 100%;
+    height: auto;
+    min-height: 0 !important;
+    aspect-ratio: 3 / 2;
+    padding: 0 !important;
+    border-radius: 18px;
+    background-color: #ead2b1;
+    background-size: contain !important;
+    background-repeat: no-repeat !important;
+    background-position: center center !important;
+  }
+}
+</style>
 </head>
 <body id="top">
 <header><div class="wrap top"><a aria-label="Muy Nuestro" class="brand" href="#top"><img alt="Muy Nuestro · Hogar · Familia · Mascotas" src="assets/logo-muy-nuestro.png"/></a><nav><a href="#hogar">Hogar</a><a href="#familia">Familia</a><a href="#mascotas">Mascotas</a><a href="#jardin">Plantas &amp; jardín</a><a href="#favoritos">Favoritos</a></nav></div></header>
