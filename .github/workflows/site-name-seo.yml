@@ -1,0 +1,53 @@
+name: MUY NUESTRO site name for Google
+
+on:
+  push:
+    paths:
+      - .github/workflows/site-name-seo.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  add-site-name:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out website
+        uses: actions/checkout@v4
+
+      - name: Add structured site name without altering appearance
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import json
+          site = Path("index.html")
+          original = site.read_text(encoding="utf-8")
+          assert original.startswith("<!DOCTYPE html>"), "Unexpected HTML document"
+          assert "<head>\n" in original, "Can't find safe insertion point"
+          if '"@type":"WebSite"' in original or 'property="og:site_name"' in original:
+              print("Site name metadata already exists. No changes.")
+          else:
+              schema = {"@context":"https://schema.org","@type":"WebSite","name":"MUY NUESTRO","alternateName":"Vive Muy Nuestro","url":"https://vivemuynuestro.com/"}
+              snippet = (
+                  '<meta property="og:site_name" content="MUY NUESTRO"/>\n'
+                  '<link rel="canonical" href="https://vivemuynuestro.com/"/>\n'
+                  '<script type="application/ld+json">\n'
+                  + json.dumps(schema, ensure_ascii=False, separators=(",", ":"))
+                  + '\n</script>\n'
+              )
+              updated = original.replace("<head>\n", "<head>\n"+snippet, 1)
+              assert updated.endswith(original[-300:]), "Unexpected tail change"
+              site.write_text(updated, encoding="utf-8")
+              print("Added WebSite metadata in head; no visual HTML changed.")
+          PY
+          if git diff --quiet -- index.html; then
+            echo "No changes to commit."
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add index.html
+            git commit -m "SEO: identify MUY NUESTRO site name"
+            git push
+          fi
