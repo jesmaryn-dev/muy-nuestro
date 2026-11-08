@@ -1,0 +1,98 @@
+name: Actualizar productos Muy Nuestro noviembre 2026
+on:
+  push:
+    paths:
+      - .github/workflows/actualizar-productos-2026-11.yml
+  workflow_dispatch:
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: false
+jobs:
+  actualizar:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Actualizar agenda y Mi Voz
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          root=Path('.')
+          p=root/'index.html';s=p.read_text()
+          if 'id="agenda-2027"' in s:
+           print('Already updated');raise SystemExit(0)
+          start=s.index('<div class="family-planner">');end=s.index('\n</div>\n</div></section>',start)+len('\n</div>')
+          agenda='''<article class="family-planner agenda-2027" id="agenda-2027" aria-labelledby="agenda-2027-title">
+          <div class="agenda-2027-layout"><div>
+          <div class="eyebrow">YA DISPONIBLE · MUY NUESTRO</div>
+          <h2 class="section-title" id="agenda-2027-title">Tu 2027, con espacio para lo importante.</h2>
+          <p>La Agenda Muy Nuestro 2027 reúne tu trabajo, tus pendientes y tus planes personales en un diseño elegante en azul petróleo, crema y verde suave. Una palabra positiva te acompaña cada mes.</p>
+          <ul class="product-features"><li>Versión imprimible tamaño carta</li><li>PDF rellenable con teclado</li><li>139 páginas en cada versión</li><li>Calendarios y 53 semanas</li><li>Enlaces internos</li><li>5 páginas de anotaciones</li></ul>
+          <p>Incluye ambas versiones y una guía breve de uso. Abre el PDF rellenable en Adobe Acrobat Reader u otro lector compatible para escribir desde tu teléfono, tablet o computadora.</p>
+          <p class="planner-note"><strong>Precio especial de introducción: $6.99 USD.</strong> Precio regular: $8.99 USD. Descarga digital; no se envía un producto físico. Consulta la vigencia de la oferta en la página de compra.</p>
+          <a class="cta" href="https://payhip.com/b/WVA1g" target="_blank" rel="noopener noreferrer" aria-label="Comprar Agenda Muy Nuestro 2027 en Payhip">Quiero mi Agenda 2027 →</a>
+          </div><figure class="agenda-2027-cover"><img src="assets/agenda-muy-nuestro-2027.png" alt="Agenda Muy Nuestro 2027: versión imprimible y PDF rellenable" loading="lazy" width="1000" height="1000"/><figcaption>Dos versiones. Una sola compra.</figcaption></figure></div>
+          </article>'''
+          s=s[:start]+agenda+s[end:]
+          s=s.replace('<a href="#familia">Familia</a><a href="#mascotas">','<a href="#familia">Familia</a><a href="#agenda-2027">Agenda 2027</a><a href="#mascotas">',1)
+          s=s.replace('<a href="#pet-planner">🐾 Conoce nuestras dos agendas</a>','<a href="#agenda-2027">📅 Agenda 2027 · Ya disponible</a><a href="#pet-planner">🐾 Agendas para mascotas</a>',1)
+          s=s.replace('<a href="#mi-voz">♡ Conoce Mi Voz</a></div>','<a href="#mi-voz">♡ Conoce Mi Voz</a><a href="#mi-voz-piloto">Mi Voz · 14 días gratis</a></div>',1)
+          s=s.replace('<strong id="mi-voz-etiqueta-precio">Precio de lanzamiento: <span id="mi-voz-precio-actual">$14.99 USD</span></strong> · Pago único. <span id="mi-voz-precio-regular">Precio regular: $24.99 USD.</span>','<strong id="mi-voz-etiqueta-precio">Precio: <span id="mi-voz-precio-actual">$24.99 USD</span></strong> · Pago único, sin suscripción mensual.')
+          s=s.replace('<li>Rutinas y transiciones</li></ul>','<li>Rutinas y transiciones</li><li>Personaliza con fotos reales</li></ul>',1)
+          pilot='''
+          <section class="mi-voz-pilot-card" id="mi-voz-piloto" aria-labelledby="mi-voz-piloto-title">
+          <div class="eyebrow">PLAN PILOTO · CONVOCATORIA PARA 10 FAMILIAS</div>
+          <h3 id="mi-voz-piloto-title">Tu experiencia puede ayudar a darle voz a más familias.</h3>
+          <p>Buscamos familias que necesiten apoyos para la comunicación y puedan probar Mi Voz en situaciones reales de su día a día. Las 10 familias seleccionadas tendrán <strong>14 días completamente gratis</strong>, desde la primera activación, y compartirán su experiencia mediante una evaluación al finalizar.</p>
+          <ul><li>Completa primero la solicitud de participación.</li><li>Revisaremos las respuestas y contactaremos individualmente a las familias seleccionadas.</li><li>Al terminar los 14 días y completar la evaluación, recibirás una tarjeta pequeña de comunicación por correo postal, aunque tus comentarios sean negativos.</li></ul>
+          <p><strong>No necesitas comprar.</strong> Sin cobros ni renovación automática. La prueba no incluye una licencia permanente. Completar la solicitud no garantiza selección; la disponibilidad de envío se confirmará antes de asignar una plaza.</p>
+          <a class="cta" href="https://mi-voz-piloto-5-familias.netlify.app/preseleccion.html" target="_blank" rel="noopener noreferrer">Solicitar 14 días gratis de Mi Voz →</a>
+          </section>'''
+          marker='</p></div>\n<figure class="mi-voz-art">'
+          assert marker in s
+          s=s.replace(marker,'</p>'+pilot+'</div>\n<figure class="mi-voz-art">',1)
+          s=re.sub(r'\n<script>\n// Mostrar el precio regular.*?</script>','',s,flags=re.S)
+          css='''
+          <style id="novedades-2027-css">
+          #agenda-2027,#mi-voz-piloto{scroll-margin-top:125px}
+          .agenda-2027-layout{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:32px;align-items:center}
+          .agenda-2027 .section-title{color:#fffaf2}.agenda-2027 .product-features li{background:rgba(255,250,242,.12);color:#fffaf2}
+          .agenda-2027 .planner-note strong{color:#efc995}.agenda-2027-cover{margin:0;min-width:0}.agenda-2027-cover img{width:100%;height:auto;display:block;border-radius:18px}.agenda-2027-cover figcaption{color:#f1e7dc;text-align:center;margin-top:12px;font-size:14px}
+          .mi-voz-pilot-card{margin-top:28px;padding:24px;background:#f1ecf7;border:1px solid #d8cde8;border-radius:20px}
+          .mi-voz-pilot-card .eyebrow{color:#624b80}.mi-voz-pilot-card h3{font-family:Georgia,serif;font-size:28px;line-height:1.2;margin:14px 0}.mi-voz-pilot-card li{color:#715f54;line-height:1.65;margin:8px 0}.mi-voz-pilot-card ul{padding-left:20px}.mi-voz-pilot-card .cta{background:#624b80}
+          @media(max-width:850px){.agenda-2027-layout{grid-template-columns:minmax(0,1fr)}.agenda-2027-cover{max-width:400px;margin:auto}.mi-voz-card{align-items:start}}
+          @media(max-width:520px){.mi-voz-pilot-card{padding:19px}.mi-voz-pilot-card h3{font-size:25px}.mi-voz-pilot-card .cta,.agenda-2027 .cta{display:block;text-align:center;white-space:normal}}
+          </style>
+          '''
+          s=s.replace('</head>',css+'</head>',1);p.write_text(s)
+          # Keep the existing public novedades page accurate and send visitors to the updated sections.
+          p=root/'novedades.html';s=p.read_text()
+          s=s.replace('Aquí puedes conocer la <strong>Agenda para Mascotas</strong> y nuestro más reciente proyecto, <strong>MUY NUESTRO · Mi Voz</strong>.','Aquí puedes conocer la <strong>Agenda Muy Nuestro 2027</strong>, nuestras agendas para mascotas y <strong>MUY NUESTRO · Mi Voz</strong>.')
+          s=s.replace('En fase piloto · No disponible para venta todavía','Disponible · $24.99 USD · Pago único')
+          s=s.replace('Este proyecto se encuentra actualmente en pruebas con familias piloto. En la web conviene presentarlo como adelanto del proyecto, sin habilitar compras hasta terminar la fase de evaluación.','Mi Voz ya está a la venta por $24.99 USD, sin suscripción mensual. También buscamos 10 familias para probarla durante 14 días completamente gratis, sin compra ni cobros automáticos. Completa la solicitud; contactaremos a las familias seleccionadas. Al finalizar la prueba y completar la evaluación, recibirás una tarjeta pequeña de comunicación por correo postal.')
+          s=s.replace('La Agenda para Mascotas ya está disponible. Mi Voz continúa en fase piloto y pronto compartiremos más información.','<a href="./#agenda-2027">Agenda Muy Nuestro 2027: precio especial de introducción $6.99 USD (regular $8.99 USD), ambas versiones incluidas →</a><br><a href="https://payhip.com/b/ufLFt" target="_blank" rel="noopener noreferrer">Comprar Mi Voz por $24.99 USD →</a><br><a href="./#mi-voz-piloto">Solicitar el piloto: 10 familias, 14 días gratis de Mi Voz →</a>')
+          p.write_text(s)
+          PY
+          curl --fail --location --retry 2 https://pe56d.s3.amazonaws.com/o_1k6sbbbma6rn1jiconc1kequgm1r.png --output assets/agenda-muy-nuestro-2027.png
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html novedades.html assets/agenda-muy-nuestro-2027.png
+          if ! git diff --cached --quiet; then
+            git commit -m "Actualizar agenda 2027, precio de Mi Voz y piloto de 10 familias"
+            git push
+          fi
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'
+      - name: Publicar página
+        id: deployment
+        uses: actions/deploy-pages@v4
