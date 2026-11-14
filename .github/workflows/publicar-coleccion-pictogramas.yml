@@ -1,0 +1,87 @@
+name: Publicar colección de pictogramas
+on:
+  push:
+    paths:
+      - .github/workflows/publicar-coleccion-pictogramas.yml
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: false
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Añadir la colección a la portada y a Novedades
+        run: |
+          python3 - <<'PY_SITE'
+          from pathlib import Path
+
+          def insert_once(source, marker, replacement):
+              if source.count(marker) != 1:
+                  raise ValueError(f'Expected one match: {marker}')
+              return source.replace(marker, replacement, 1)
+
+          home = Path('index.html')
+          news = Path('novedades.html')
+          source = home.read_text()
+          updates = news.read_text()
+          if 'id="pictogramas"' in source:
+              raise SystemExit('The collection section already exists')
+
+          nav = '<a href="#mi-voz">Mi Voz</a>'
+          source = insert_once(source, nav, nav + '<a href="#pictogramas">Pictogramas</a>')
+          shortcut = '<a href="#agenda-2027">📅 Agenda 2027 · Ya disponible</a>'
+          source = insert_once(source, shortcut, '<a href="#pictogramas">Pictogramas en español · 4 kits</a>' + shortcut)
+          style = """<style>
+          #pictogramas{scroll-margin-top:125px}
+          #pictogramas .mi-voz-art{background:#f6f1e6}
+          #pictogramas .mi-voz-art img{display:block;border-radius:14px}
+          </style>
+          """
+          source = insert_once(source, '</head>', style + '</head>')
+          section = """<section class="mi-voz-section" id="pictogramas" aria-labelledby="pictogramas-title">
+          <div class="wrap"><div class="mi-voz-card">
+          <div class="mi-voz-copy">
+          <h2 class="section-title" id="pictogramas-title">4 kits de pictogramas en español</h2>
+          <p>Muéstrale a tu peque qué toca ahora, ayúdale a expresar cómo se siente y organiza actividades en casa o en el salón con apoyos visuales de Muy Nuestro.</p>
+          <ul class="product-features">
+          <li>Vida Diaria</li>
+          <li>Escuela</li>
+          <li>Comunicación y Emociones</li>
+          <li>Apoyos Visuales y Organización</li>
+          </ul>
+          <p class="mi-voz-note">225 páginas en 4 PDF separados. Imprime en tamaño carta y recorta las tarjetas. <strong>Los 4 kits por $7 USD.</strong></p>
+          <a class="cta" href="https://payhip.com/b/pVj6O" target="_blank" rel="noopener noreferrer">Comprar los 4 kits en Payhip →</a>
+          </div>
+          <figure class="mi-voz-art"><img src="assets/coleccion-pictogramas-muy-nuestro.webp" width="720" height="900" loading="lazy" alt="Muestras de las tarjetas y apoyos visuales de los cuatro kits de Muy Nuestro"/></figure>
+          </div></div>
+          </section>
+          """
+          marker = '<section class="mi-voz-section" id="mi-voz"'
+          source = insert_once(source, marker, section + marker)
+          marker = '<section class="footbox">'
+          updates = insert_once(updates, marker, marker + '\n      <a href="./#pictogramas">Colección de pictogramas en español · 4 kits imprimibles →</a><br>')
+          home.write_text(source)
+          news.write_text(updates)
+          PY_SITE
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/publicar-coleccion-pictogramas.yml
+          git add index.html novedades.html
+          git diff --cached --check
+          git commit -m "Añadir colección de pictogramas en español"
+          git push origin HEAD:main
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'
+      - name: Publicar página
+        id: deployment
+        uses: actions/deploy-pages@v4
