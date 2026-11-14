@@ -1,0 +1,73 @@
+name: Actualizar Agenda 2027 y Mi Voz
+on:
+  push:
+    paths:
+      - .github/workflows/actualizar-agenda-y-mi-voz.yml
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: false
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Actualizar precio y retirar convocatoria pública
+        run: |
+          python3 - <<'PY_SITE'
+          from pathlib import Path
+          import re
+
+          def change(source, pattern, replacement):
+              updated, count = re.subn(pattern, lambda _: replacement, source, flags=re.S)
+              if count != 1:
+                  raise ValueError(f'Expected one match, got {count}: {pattern}')
+              return updated
+
+          home = Path('index.html')
+          news = Path('novedades.html')
+          source = home.read_text()
+          updates = news.read_text()
+
+          source = change(source, r'<p class="planner-note"><strong>Precio especial de introducción: \$6\.99 USD\.</strong> Precio regular: \$8\.99 USD\..*?</p>',
+                          '<p class="planner-note"><strong>Precio: $8.99 USD.</strong> Incluye las dos versiones en una descarga digital.</p>')
+          source = change(source, r'assets/agenda-muy-nuestro-2027\.png', 'assets/agenda-muy-nuestro-2027-vigente.webp')
+          source = change(source, r'<a href="#mi-voz-piloto">Mi Voz · 14 días gratis</a>', '')
+          source = change(source, r'\n<section class="mi-voz-pilot-card" id="mi-voz-piloto".*?</section>', '')
+          source = source.replace('#agenda-2027,#mi-voz-piloto', '#agenda-2027')
+          source = re.sub(r'^\.mi-voz-pilot-card[^\n]*\n', '', source, flags=re.M)
+          source = source.replace('.mi-voz-pilot-card{padding:19px}.mi-voz-pilot-card h3{font-size:25px}.mi-voz-pilot-card .cta,','')
+
+          updates = change(updates, r'<div class="note">Mi Voz ya está a la venta.*?</div>',
+                           '<div class="note">Mi Voz ya está a la venta por $24.99 USD, sin suscripción mensual.</div>')
+          updates = change(updates, r'<a href="\./#agenda-2027">[^<]*</a>', '<a href="./#agenda-2027">Agenda Muy Nuestro 2027 · $8.99 USD · Ambas versiones incluidas →</a>')
+          updates = change(updates, r'<br><a href="\./#mi-voz-piloto">[^<]*</a>', '')
+
+          for text in (source, updates):
+              assert '$6.99' not in text and '#mi-voz-piloto' not in text and '14 días' not in text
+              assert 'https://payhip.com/b/ufLFt' in text
+
+          assert 'https://payhip.com/b/WVA1g' in source and 'https://payhip.com/b/pVj6O' in source
+          home.write_text(source)
+          news.write_text(updates)
+          PY_SITE
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/actualizar-agenda-y-mi-voz.yml
+          git add index.html novedades.html
+          git diff --cached --check
+          git commit -m "Actualizar precio de Agenda 2027 y retirar convocatoria pública de Mi Voz"
+          git push origin HEAD:main
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'
+      - name: Publicar página
+        id: deployment
+        uses: actions/deploy-pages@v4
