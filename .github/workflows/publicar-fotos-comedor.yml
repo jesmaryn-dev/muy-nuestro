@@ -1,0 +1,61 @@
+name: Publicar fotos del comedor
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/publicar-fotos-comedor.yml
+  workflow_dispatch:
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: false
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Añadir fotos a la galería
+        run: |
+          python3 - <<'PY'
+          import json
+          import re
+          from pathlib import Path
+
+          page = Path('index.html')
+          source = page.read_bytes()
+          match = re.search(rb'const galleries=(\{.*?\});', source)
+          assert match, 'No se encontró la galería'
+          galleries = json.loads(match[1])
+          photos = ['assets/comedor-vista-general.jpg', 'assets/comedor-banco-de-madera.jpg']
+          missing = [photo for photo in photos if photo not in galleries['COMEDOR']]
+          for photo in photos:
+              assert Path(photo).is_file(), photo
+          if missing:
+              entry = re.search(rb'"COMEDOR": \[.*?\]', match[1])
+              assert entry, 'No se encontró la sección del comedor'
+              end = match.start(1) + entry.end() - 1
+              new = source[:end] + b', ' + b', '.join(json.dumps(photo).encode() for photo in missing) + source[end:]
+              galleries['COMEDOR'].extend(missing)
+              assert json.loads(re.search(rb'const galleries=(\{.*?\});', new)[1]) == galleries
+              page.write_bytes(new)
+          PY
+          if ! git diff --quiet -- index.html; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add index.html
+            git commit -m "Añadir las fotos a la galería del comedor"
+            git push origin HEAD:main
+          fi
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'
+      - name: Publicar página
+        id: deployment
+        uses: actions/deploy-pages@v4
