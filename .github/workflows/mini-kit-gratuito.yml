@@ -49,6 +49,8 @@ jobs:
       - uses: actions/upload-pages-artifact@v3
         with:
           path: '.'
+      - name: Esperar disponibilidad del archivo de publicación
+        run: sleep 20
       - name: Publicar sitio
         id: deployment
         uses: actions/deploy-pages@v4
