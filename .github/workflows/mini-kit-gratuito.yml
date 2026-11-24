@@ -1,0 +1,54 @@
+name: Publicar Mini Kit gratuito
+on:
+  push:
+    paths:
+      - .github/workflows/mini-kit-gratuito.yml
+  workflow_dispatch:
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: false
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Añadir Mini Kit gratuito
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text()
+          if 'id="mini-kit-gratuito"' not in s:
+              marker='<div class="wrap learning-products-intro">'
+              assert marker in s
+              s=s.replace(marker,"<section class=\"wrap mini-kit-gift\" id=\"mini-kit-gratuito\" aria-labelledby=\"mini-kit-title\"><img src=\"https://pe56d.s3.amazonaws.com/o_1k87fo6dm17to1pkpp979qkun81f.png\" alt=\"Mini Kit gratuito de pictogramas de Muy Nuestro con nuestra firma oficial\" loading=\"lazy\"/><div><p class=\"eyebrow\">UN REGALO DE MUY NUESTRO</p><h2 class=\"section-title\" id=\"mini-kit-title\">Mini Kit de Pictogramas – Comunicación Básica</h2><p>Una manera sencilla de apoyar la comunicación y la expresión de necesidades, deseos y emociones.</p><ul><li>24 pictogramas de comunicación básica.</li><li>Tres tiras de comunicación para construir frases.</li><li>Guía de instrucciones y ejemplos de uso.</li><li>Material imprimible y recortable.</li></ul><p>Para familias, educadores y profesionales que acompañan a niños y niñas con necesidades de apoyo en la comunicación.</p><p><strong>Completamente gratuito.</strong> Obtén el PDF desde nuestra tienda en Payhip.</p><a class=\"cta\" href=\"https://payhip.com/b/LHja2\" target=\"_blank\" rel=\"noopener noreferrer\">Obtener mi Mini Kit gratis →</a><p><em>Porque todos merecemos una manera de comunicarnos.</em></p></div></section>"+'\n'+marker,1)
+              s=s.replace('</head>',"<style id=\"mini-kit-gift-style\">#mini-kit-gratuito{scroll-margin-top:125px}.mini-kit-gift{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);gap:32px;align-items:center;background:var(--paper);border:1px solid var(--line);border-radius:24px;padding:30px;margin:30px auto}.mini-kit-gift img{width:100%;height:auto;border-radius:16px}.mini-kit-gift p,.mini-kit-gift li{line-height:1.65}.mini-kit-gift .section-title{font-size:clamp(28px,4vw,38px)}.mini-kit-gift .cta{text-align:center}@media(max-width:700px){.mini-kit-gift{grid-template-columns:1fr;padding:22px}.mini-kit-gift img{max-width:390px;margin:auto}}</style>"+'\n</head>',1)
+              marker='<div class="wrap project-links" aria-label="Novedades de Muy Nuestro">'
+              assert marker in s
+              s=s.replace(marker,marker+'<a href="#mini-kit-gratuito">🎁 Mini Kit de pictogramas · Gratis</a>',1)
+              p.write_text(s)
+          assert s.count('id="mini-kit-gratuito"') == 1
+          assert 'https://payhip.com/b/LHja2' in s
+          
+          PY
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          if ! git diff --cached --quiet; then
+            git commit -m "Añadir Mini Kit gratuito con enlace a Payhip"
+            git push
+          fi
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'
+      - name: Publicar sitio
+        id: deployment
+        uses: actions/deploy-pages@v4
